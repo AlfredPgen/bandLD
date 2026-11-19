@@ -1,0 +1,31 @@
+name: build
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y g++ make libdeflate-dev libzstd-dev libsqlite3-dev python3-numpy python3-scipy
+      - name: Build static binary
+        run: |
+          make static
+          ./bandLD --version
+          cp bandLD bandLD_linux_x86_64
+          sha256sum bandLD_linux_x86_64 > bandLD_linux_x86_64.sha256
+      - uses: actions/upload-artifact@v4
+        with:
+          name: bandLD_linux_x86_64
+          path: |
+            bandLD_linux_x86_64
+            bandLD_linux_x86_64.sha256
+      - name: Tests
+        run: make test
